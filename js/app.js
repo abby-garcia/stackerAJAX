@@ -1,13 +1,25 @@
+$(document).ready( function() {
+	$('.unanswered-getter').submit( function(e){
+		e.preventDefault();
+		// zero out results if previous search has run
+		$('.results').html('');
+		// get the value of the tags the user submitted
+		var tags = $(this).find("input[name='tags']").val();
+		getUnanswered(tags);
+	});
+});
+
+
 // this function takes the question object returned by the StackOverflow request
 // and returns new result to be appended to DOM
 var showQuestion = function(question) {
 	
 	// clone our result template code
-	var result = $('.templates .question').clone();
+	var result = $('.templates .question').clone(); //WHAT DOES THIS DO?
 	
 	// Set the question properties in result
 	var questionElem = result.find('.question-text a');
-	questionElem.attr('href', question.link);
+	questionElem.attr('href', question.link); //
 	questionElem.text(question.title);
 
 	// set the date asked property in result
@@ -52,7 +64,7 @@ var getUnanswered = function(tags) {
 	
 	// the parameters we need to pass in our request to StackOverflow's API
 	var request = { 
-		tagged: tags,
+		tagged: tags,  
 		site: 'stackoverflow',
 		order: 'desc',
 		sort: 'creation'
@@ -81,14 +93,73 @@ var getUnanswered = function(tags) {
 	});
 };
 
+// Inpiration Section
+// This is what gets appended on the show
 
-$(document).ready( function() {
-	$('.unanswered-getter').submit( function(e){
-		e.preventDefault();
-		// zero out results if previous search has run
-		$('.results').html('');
-		// get the value of the tags the user submitted
-		var tags = $(this).find("input[name='tags']").val();
-		getUnanswered(tags);
+var showAnswer = function(answer) {
+	
+	// clone our result template code
+	var result = $('.result .answer').clone(); //WHAT DOES THIS DO?
+	
+	// Set the question properties in result
+	var questionElem = result.find('.answer-text a');
+	questionElem.attr('href', answer.link); //
+	questionElem.text(answer.title);
+
+	// set the date asked property in result
+	var asked = result.find('.answered-date');
+	var date = new Date(1000*question.creation_date);
+	asked.text(date.toString());
+
+	// set the .viewed for question property in result
+	var viewed = result.find('.viewed');
+	viewed.text(answer.view_count);
+
+	// set some properties related to asker
+	var asker = result.find('.answerer');
+	asker.html('<p>Name: <a target="_blank" '+
+		'href=http://stackoverflow.com/users/' + answer.owner.user_id + ' >' +
+		answer.owner.display_name +
+		'</a></p>' +
+		'<p>Reputation: ' + answer.owner.reputation + '</p>'
+	);
+
+	return result;
+};
+
+
+
+
+// This is getting the info from the API
+var getInspiration = function(tags){
+
+
+	var request = {
+		tag: tags,
+		period: 'month',
+		pageSize: '10',
+		site: 'stackoverflow'
+	};
+
+	$.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/" + tag + "/top-answerers",
+		data: request,
+		dataType: "jsonp",//use jsonp to avoid cross origin issues
+		type: "GET"
+	})	
+	.done(function(result){
+		var searchResults = showSearchResults(request.tag, result.items.length);
+
+		$('.search-results').html(searchResults);
+
+		$.each(result.items, function(i, item) {
+			var topUsers = showUser(item);
+			$('.results').append(topUsers);
+		});
+	})
+	.fail(function(jqXHR, error, errorThrown){
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
 	});
-});
+};
+

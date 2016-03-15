@@ -5,6 +5,7 @@
 	<title>Stack Overflow AJAX Demo</title>
 	<link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
 	<div class="container">
 		<div class="intro">
@@ -16,6 +17,7 @@
 			</div>
 		</div>
 		<hr>
+
 		<div class="stack">	
 			<h3>Get Unanswered Questions</h3>
 			<p>Find unanswered questions by tag. For multiple tags, use a semi-colon to separate.</p>
@@ -29,11 +31,14 @@
 				<input type="submit" value="Submit">
 			</form>
 		</div>
+
 		<div class="results-container">
 			<div class="search-results"></div>
 			<div class="results"></div>
 		</div>
 	</div>
+
+	<!-- hidden -->
 	<div class="templates hidden">
 		<dl class="result question">
 			<dt>Question</dt>
@@ -45,10 +50,34 @@
 			<dt>Asker</dt>
 				<dd class="asker"></dd>
 		</dl>
-		<div class="error">
+		
+	
+
+	<!-- Inspiration Section -->
+	<div class="inspiration hidden">
+		<dl class="result answer">
+			<dt>Answer</dt>
+				<dd class="answer-text"><a href="" target="_blank"></a></dd>
+				<dt>Answered</dt>
+				<dd class="answered-date"></dd>
+				<dt>Viewed</dt>
+				<dd class="viewed"></dd>
+				<dt>Person Who Answered</dt>
+				<dd class="answerer"></dd>
+		</dl>
+
+	</div>
+
+	<div class="error">
 			<p>Uh-oh! Something went wrong with your request. Here's what we know:</p>
 		</div>
-	</div>
+	</div>  <!-- this div belongs to line 42, template div -->
+
+
+
+
+
+
 	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
 	<script src="js/app.js"></script>
 </body>
