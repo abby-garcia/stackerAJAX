@@ -7,12 +7,56 @@ $(document).ready( function() {
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
 	});
+
+	$('.inspiration-getter').submit( function(e){
+		e.preventDefault();
+		// zero out results if previous search has run
+		$('.results').html('');
+		// get the value of the tags the user submitted
+		var tags = $(this).find("input[name='answerers']").val();
+		getInspiration(tags);
+	});
+
 });
 
+// takes a string of semi-colon separated tags to be searched
+// for on StackOverflow
+var getUnanswered = function(tags) {
+	
+	// the parameters we need to pass in our request to StackOverflow's API
+	var request = { 
+		tagged: tags,  
+		site: 'stackoverflow',
+		order: 'desc',
+		sort: 'creation'
+	};
+	
+	$.ajax({
+		url: "http://api.stackexchange.com/2.2/questions/unanswered",
+		data: request,
+		dataType: "jsonp",//use jsonp to avoid cross origin issues
+		type: "GET",
+	})
+	.done(function(result){ //this waits for the ajax to return with a succesful promise object
+		var searchResults = showSearchResults(request.tagged, result.items.length);
+
+		$('.search-results').html(searchResults);
+		//$.each is a higher order function. It takes an array and a function as an argument.
+		//The function is executed once for each item in the array.
+		$.each(result.items, function(i, item) {
+			var question = showUnanswered(item);
+			$('.results').append(question);
+		});
+	})
+	.fail(function(jqXHR, error){ //this waits for the ajax to return with an error promise object
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
 
 // this function takes the question object returned by the StackOverflow request
 // and returns new result to be appended to DOM
-var showQuestion = function(question) {
+var showUnanswered = function(question) {
 	
 	// clone our result template code
 	var result = $('.templates .question').clone(); //WHAT DOES THIS DO?
@@ -44,6 +88,67 @@ var showQuestion = function(question) {
 };
 
 
+
+// This is getting the info from the API
+var getInspiration = function(tags){
+
+	var request = {
+		site: 'stackoverflow'
+	};
+
+	$.ajax({
+		url: "http://api.stackexchange.com/2.2/tags/" + tags + "/top-answerers/all_time",
+		data: request,
+		dataType: "jsonp",//use jsonp to avoid cross origin issues
+		type: "GET"
+	})	
+	.done(function(result){
+		
+		var searchResults = showSearchResults(tags, result.items.length);
+		console.log(result);
+		$('.search-results').html(searchResults);
+
+		$.each(result.items, function(key, item) {
+			var topAnswers = showInspiration(item);
+			$('.results').append(topAnswers);
+		});
+	})
+	.fail(function(jqXHR, error, errorThrown){
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
+
+var showInspiration = function(answer) {
+	
+	// clone our result template code
+	var result = $('.templates .answer').clone(); //WHAT DOES THIS DO?
+	
+	// set some properties related to asker
+	var answerer = result.find('.answerer');
+	answerer.html('<p>Name: <a target="_blank" '+
+		'href=http://stackoverflow.com/users/' + answer.user.user_id + ' >' +
+		answer.user.display_name +
+		'</a></p>' +
+		'<p>Reputation: ' + answer.user.reputation + '</p>'
+	);
+
+	// Set the post count properties in result
+	var postCountElem = result.find('.post-count');
+	postCountElem.text(answer.post_count);
+
+	// set the score for answer property in result
+	var score = result.find('.score');
+	score.text(answer.score);
+
+	return result;
+};
+
+// you have to do showUsert look at the show answer function
+// see what is avliable the the User object and see what's avliable 
+// should be templates not inspiration.... answerers
+
+
 // this function takes the results object from StackOverflow
 // and returns the number of results and tags to be appended to DOM
 var showSearchResults = function(query, resultNum) {
@@ -58,108 +163,4 @@ var showError = function(error){
 	errorElem.append(errorText);
 };
 
-// takes a string of semi-colon separated tags to be searched
-// for on StackOverflow
-var getUnanswered = function(tags) {
-	
-	// the parameters we need to pass in our request to StackOverflow's API
-	var request = { 
-		tagged: tags,  
-		site: 'stackoverflow',
-		order: 'desc',
-		sort: 'creation'
-	};
-	
-	$.ajax({
-		url: "http://api.stackexchange.com/2.2/questions/unanswered",
-		data: request,
-		dataType: "jsonp",//use jsonp to avoid cross origin issues
-		type: "GET",
-	})
-	.done(function(result){ //this waits for the ajax to return with a succesful promise object
-		var searchResults = showSearchResults(request.tagged, result.items.length);
-
-		$('.search-results').html(searchResults);
-		//$.each is a higher order function. It takes an array and a function as an argument.
-		//The function is executed once for each item in the array.
-		$.each(result.items, function(i, item) {
-			var question = showQuestion(item);
-			$('.results').append(question);
-		});
-	})
-	.fail(function(jqXHR, error){ //this waits for the ajax to return with an error promise object
-		var errorElem = showError(error);
-		$('.search-results').append(errorElem);
-	});
-};
-
-// Inpiration Section
-// This is what gets appended on the show
-
-var showAnswer = function(answer) {
-	
-	// clone our result template code
-	var result = $('.result .answer').clone(); //WHAT DOES THIS DO?
-	
-	// Set the question properties in result
-	var questionElem = result.find('.answer-text a');
-	questionElem.attr('href', answer.link); //
-	questionElem.text(answer.title);
-
-	// set the date asked property in result
-	var asked = result.find('.answered-date');
-	var date = new Date(1000*question.creation_date);
-	asked.text(date.toString());
-
-	// set the .viewed for question property in result
-	var viewed = result.find('.viewed');
-	viewed.text(answer.view_count);
-
-	// set some properties related to asker
-	var asker = result.find('.answerer');
-	asker.html('<p>Name: <a target="_blank" '+
-		'href=http://stackoverflow.com/users/' + answer.owner.user_id + ' >' +
-		answer.owner.display_name +
-		'</a></p>' +
-		'<p>Reputation: ' + answer.owner.reputation + '</p>'
-	);
-
-	return result;
-};
-
-
-
-
-// This is getting the info from the API
-var getInspiration = function(tags){
-
-
-	var request = {
-		tag: tags,
-		period: 'month',
-		pageSize: '10',
-		site: 'stackoverflow'
-	};
-
-	$.ajax({
-		url: "http://api.stackexchange.com/2.2/tags/" + tag + "/top-answerers",
-		data: request,
-		dataType: "jsonp",//use jsonp to avoid cross origin issues
-		type: "GET"
-	})	
-	.done(function(result){
-		var searchResults = showSearchResults(request.tag, result.items.length);
-
-		$('.search-results').html(searchResults);
-
-		$.each(result.items, function(i, item) {
-			var topUsers = showUser(item);
-			$('.results').append(topUsers);
-		});
-	})
-	.fail(function(jqXHR, error, errorThrown){
-		var errorElem = showError(error);
-		$('.search-results').append(errorElem);
-	});
-};
 
